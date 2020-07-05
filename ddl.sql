@@ -1,5 +1,6 @@
-CREATE DATABASE IF NOT EXISTS user_mgmt;
-use user_mgmt;
+-- CREATE DATABASE IF NOT EXISTS user_mgmt;
+-- use user_mgmt;
+use `heroku_f4655c55cf4efcf`;
 drop table if EXISTS employee;
 create table employee (
 empID int auto_increment primary key,

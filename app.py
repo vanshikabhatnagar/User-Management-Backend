@@ -1,26 +1,39 @@
-from flask import Flask, request, jsonify
-from flask_mysqldb import MySQL
-from flask_cors import CORS, cross_origin
+#  ========================================== IMPORTS ==========================================
+from flask import Flask,jsonify,request
+from flask_mysqldb import MySQL 
+from datetime import date
+from flask_cors import CORS
+import logging
+import sys
 import mysql.connector
 from os import environ
-app = Flask(__name__)
-CORS(app)
 
+
+# ========================================== CONFIG SETTINGS ==========================================
+#  INITIALISE FLASK APP
+app = Flask(__name__)
+
+# ----> MySQL Server to use <----
+# sqlServer = "remote"
+# sqlServer = "local"
+sqlServer = "heroku"
 
 # Mode: development OR production
 processEnv = app.config['ENV']
 
-mysql = MySQL(app)
 
+# Enable CORS
+CORS(app)
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 # PRODUCTION
 if(processEnv == "production"):
     # USE HEROKU
+    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
     app.config['MYSQL_USER'] = environ.get('MYSQL_USER')
     app.config['MYSQL_HOST'] = environ.get('MYSQL_HOST')
     app.config['MYSQL_DB'] = environ.get('MYSQL_DB')
     app.config['MYSQL_PASSWORD'] = environ.get('MYSQL_PASSWORD')
-    app.config['JWT_SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
 
 # DEVELOPMENT
 else:
@@ -38,6 +51,9 @@ else:
     #     # Enable Logging for Heroku
     #     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     #     app.logger.setLevel(logging.ERROR)
+
+
+mysql = MySQL(app)
 
 
 @app.route('/')
