@@ -1,16 +1,43 @@
 from flask import Flask, request, jsonify
 from flask_mysqldb import MySQL
 from flask_cors import CORS, cross_origin
-
+import mysql.connector
+from os import environ
 app = Flask(__name__)
 CORS(app)
 
+
+# Mode: development OR production
+processEnv = app.config['ENV']
+
 mysql = MySQL(app)
 
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_HOST'] = '127.0.0.1'
-app.config['MYSQL_DB'] = 'user_mgmt'
-app.config['MYSQL_PASSWORD'] = 'lakshay'
+
+# PRODUCTION
+if(processEnv == "production"):
+    # USE HEROKU
+    app.config['MYSQL_USER'] = environ.get('MYSQL_USER')
+    app.config['MYSQL_HOST'] = environ.get('MYSQL_HOST')
+    app.config['MYSQL_DB'] = environ.get('MYSQL_DB')
+    app.config['MYSQL_PASSWORD'] = environ.get('MYSQL_PASSWORD')
+    app.config['JWT_SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
+
+# DEVELOPMENT
+else:
+
+    # =========================== LOCAL SQL SERVER ===========================
+    # if(sqlServer == "local"):
+    app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+    app.config['MYSQL_USER'] = 'root'
+    app.config['MYSQL_HOST'] = '127.0.0.1'
+    app.config['MYSQL_DB'] = 'user_mgmt'
+    app.config['MYSQL_PASSWORD'] = 'vanshika'
+    # =========================== HEROKU SQL SERVER ===========================
+    # else:
+    #     app.config.from_object('config')
+    #     # Enable Logging for Heroku
+    #     app.logger.addHandler(logging.StreamHandler(sys.stdout))
+    #     app.logger.setLevel(logging.ERROR)
 
 
 @app.route('/')
@@ -26,7 +53,7 @@ def getEmp():
     query = "SELECT * FROM employee"
     cur.execute(query)
     res = cur.fetchall()
-    return str(res)
+    return jsonify(res)
 
 
 @app.route('/employee/get/<id>')
