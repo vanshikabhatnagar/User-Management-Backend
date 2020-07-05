@@ -37,6 +37,7 @@ if(processEnv == "production"):
     app.config['MYSQL_HOST'] = environ.get('MYSQL_HOST')
     app.config['MYSQL_DB'] = environ.get('MYSQL_DB')
     app.config['MYSQL_PASSWORD'] = environ.get('MYSQL_PASSWORD')
+    app.config['JWT_SECRET_KEY'] = environ.get('JWT_SECRET_KEY')
 
 # DEVELOPMENT
 else:
