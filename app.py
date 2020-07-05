@@ -1,13 +1,16 @@
 #  ========================================== IMPORTS ==========================================
-from flask import Flask,jsonify,request
-from flask_mysqldb import MySQL 
+from flask import Flask, jsonify, request
+from flask_mysqldb import MySQL
 from datetime import date
 from flask_cors import CORS
 import logging
 import sys
 import mysql.connector
 from os import environ
-
+from flask_jwt_extended import (
+    JWTManager, jwt_required, create_access_token,jwt_optional,
+    get_jwt_identity
+)
 
 # ========================================== CONFIG SETTINGS ==========================================
 #  INITIALISE FLASK APP
@@ -44,7 +47,8 @@ else:
     app.config['MYSQL_USER'] = 'root'
     app.config['MYSQL_HOST'] = '127.0.0.1'
     app.config['MYSQL_DB'] = 'user_mgmt'
-    app.config['MYSQL_PASSWORD'] = 'vanshika'
+    app.config['MYSQL_PASSWORD'] = 'lakshay'
+    app.config['JWT_SECRET_KEY'] = '80NwB9CS03OzSND1HQY2Q3NF1S6P5sg2AWY9LRITXYddf8NTPY'
     # =========================== HEROKU SQL SERVER ===========================
     # else:
     #     app.config.from_object('config')
@@ -52,7 +56,7 @@ else:
     #     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     #     app.logger.setLevel(logging.ERROR)
 
-
+jwt = JWTManager(app)
 mysql = MySQL(app)
 
 
@@ -126,7 +130,7 @@ def getInv():
     cur = mysql.connection.cursor()
     cur.execute('SELECT * FROM investors')
     res = cur.fetchall()
-    return str(res)
+    return jsonify(res)
 
 
 @app.route('/investors/get/<id>')
@@ -217,3 +221,45 @@ def insertAdmin():
         return "successful"
     except Exception as e:
         return "unsuccessful"+str(e)
+
+
+@app.route('/auth', methods=['POST'])
+def auth():
+    try:
+        userID = request.json['userID']
+        password = request.json['password']
+        cursor = mysql.connection.cursor()
+        query = 'select password from userpasswords where id=%s'%(userID)
+        print(query)
+        cursor.execute(query)
+        res = cursor.fetchone()
+        if(res is not None and res['password']==password):
+            return jsonify({'message':'Logged in successfully'}),200
+        else:
+            return jsonify({'message':'Wrong Password'}), 401
+    except Exception as e:
+        return "unsuccessful"+str(e)
+
+
+# Working
+@app.route('/login', methods=['POST'])
+@jwt_optional
+def login():
+    userID = get_jwt_identity()
+    if(userID):
+        access_token = create_access_token(identity=userID)
+        return jsonify({'message':'Logged in successfully','access_token':access_token}),200
+    cursor = mysql.connection.cursor()
+    userID = request.json['userID']
+    password = request.json['password']
+    query = 'select password from userpasswords where id=%s'%(userID)
+    try: 
+        cursor.execute(query)
+        res = cursor.fetchone()
+        if(res is not None and res['password']==password):
+            access_token = create_access_token(identity=userID)
+            return jsonify({'message':'Logged in successfully','access_token':access_token}),200
+        else:
+            return jsonify({'message':'Wrong Password'}), 401
+    except Exception as e:
+        return jsonify({'Error': 'True','message': str(e)}), 400
